@@ -1,4 +1,5 @@
 # Week 17 Lab: Azure Hub-and-Spoke Firewall Architecture
+[![Terraform Validate](https://github.com/devinlaws50-wq/terraform-azure-hub-spoke-firewall/actions/workflows/terraform-validate.yml/badge.svg)](https://github.com/devinlaws50-wq/terraform-azure-hub-spoke-firewall/actions/workflows/terraform-validate.yml)
 
 ![Platform](https://img.shields.io/badge/Platform-Microsoft%20Azure-0078D4?style=for-the-badge)
 ![IaC](https://img.shields.io/badge/IaC-Terraform-844FBA?style=for-the-badge)
