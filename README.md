@@ -46,33 +46,10 @@ The hub hosts Azure Firewall and Azure Bastion, while workload virtual machines 
 
 User-defined routes on the spoke subnets send default outbound traffic to the Azure Firewall private IP, creating a centralized inspection point for internet-bound traffic.
 
-```mermaid
-flowchart LR
-    Internet((Internet))
-    LA[(Log Analytics)]
-    Bastion[Azure Bastion]
+![Azure Hub-and-Spoke Firewall Architecture](diagrams/wk17-diagram.png)
 
-    subgraph Hub["Hub VNet: vnet-hub-devin"]
-        FW["Azure Firewall\nfw-hub-devin\nPrivate IP: 10.0.1.4"]
-    end
+*Azure hub-and-spoke architecture with centralized Azure Firewall, private spoke workloads, Bastion access, forced egress routing, and Log Analytics monitoring.*
 
-    subgraph Spoke1["Spoke 1 VNet: vnet-spoke1-devin"]
-        VM1["vm-spoke1-01\n10.1.1.4"]
-    end
-
-    subgraph Spoke2["Spoke 2 VNet: vnet-spoke2-devin"]
-        VM2["vm-spoke2-01\n10.2.1.4"]
-    end
-
-    VM1 -->|0.0.0.0/0 via UDR| FW
-    VM2 -->|0.0.0.0/0 via UDR| FW
-    FW --> Internet
-
-    Bastion --> VM1
-    FW --> LA
-
-    Hub <-->|VNet Peering| Spoke1
-    Hub <-->|VNet Peering| Spoke2
 Technologies Used
 
     | Technology             | Purpose                                       |
