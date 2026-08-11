@@ -390,34 +390,3 @@ Repository Structure
 │   └── versions.tf
 ├── .gitignore
 └── README.md
-
-## Why this is stronger
-
-There are a few important changes here.
-
-**First**, we're completely removing the training-week identity from the headline:
-
-```text
-Week 17 Lab
-
-becomes:
-
-Azure Hub-and-Spoke Firewall Architecture with Terraform
-
-That's much better when a recruiter opens it.
-
-Second, I corrected the repository structure. Your old README still advertised:
-
-terraform.tfstate
-terraform.tfstate.backup
-terraform.tfvars
-
-Those files should never look like intentional repository contents. The new structure accurately shows your sanitized repository.
-
-Third, we elevated the things that make this more than an Azure tutorial:
-
-Business problem → Architecture → Security controls → Deployment → Validation → Troubleshooting → Security considerations → Costs → Cleanup → Skills
-
-That's how an infrastructure engineer should explain a project.
-
-And we incorporated the CI improvement we just made—the SSH-key portability problem is now documented as a genuine engineering lesson rather than something that simply broke.
