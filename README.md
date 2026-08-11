@@ -73,8 +73,8 @@ flowchart LR
 
     Hub <-->|VNet Peering| Spoke1
     Hub <-->|VNet Peering| Spoke2
-
 Technologies Used
+
     | Technology             | Purpose                                       |
 | ---------------------- | --------------------------------------------- |
 | Terraform              | Infrastructure as Code deployment             |
