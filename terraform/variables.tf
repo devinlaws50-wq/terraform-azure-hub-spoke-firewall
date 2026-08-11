@@ -15,3 +15,8 @@ variable "vm_size" {
   type    = string
   default = "Standard_D2s_v3"
 }
+
+variable "ssh_public_key" {
+  description = "SSH public key used to access the Linux virtual machines."
+  type        = string
+}
