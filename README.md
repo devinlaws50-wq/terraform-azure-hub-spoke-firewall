@@ -52,7 +52,7 @@ User-defined routes on the spoke subnets send default outbound traffic to the Az
 
 Technologies Used
 
-    | Technology             | Purpose                                       |
+| Technology             | Purpose                                       |
 | ---------------------- | --------------------------------------------- |
 | Terraform              | Infrastructure as Code deployment             |
 | Microsoft Azure        | Cloud platform                                |
