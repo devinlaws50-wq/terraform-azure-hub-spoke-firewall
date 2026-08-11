@@ -46,7 +46,7 @@ The hub hosts Azure Firewall and Azure Bastion, while workload virtual machines 
 
 User-defined routes on the spoke subnets send default outbound traffic to the Azure Firewall private IP, creating a centralized inspection point for internet-bound traffic.
 
-```mermaid
+````mermaid
 flowchart LR
     Internet((Internet))
     LA[(Log Analytics)]
@@ -73,6 +73,7 @@ flowchart LR
 
     Hub <-->|VNet Peering| Spoke1
     Hub <-->|VNet Peering| Spoke2
+```text
 
 Technologies Used
     | Technology             | Purpose                                       |
