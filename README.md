@@ -1,4 +1,4 @@
-# Azure Hub-and-Spoke Firewall Architecture with Terraform
+# 🔥 Azure Hub-and-Spoke Firewall Architecture with Terraform
 
 [![Terraform Validate](https://github.com/devinlaws50-wq/terraform-azure-hub-spoke-firewall/actions/workflows/terraform-validate.yml/badge.svg)](https://github.com/devinlaws50-wq/terraform-azure-hub-spoke-firewall/actions/workflows/terraform-validate.yml)
 
@@ -9,7 +9,47 @@
 ![Access](https://img.shields.io/badge/Access-Azure%20Bastion-4CAF50?style=for-the-badge)
 ![Monitoring](https://img.shields.io/badge/Monitoring-Log%20Analytics-8E44AD?style=for-the-badge)
 
-## Project Overview
+A segmented Azure network built with Terraform. Azure Firewall in the hub controls all internet egress from the spokes, Azure Bastion provides private admin access, and firewall logs in Log Analytics prove which traffic was allowed and which was denied.
+
+![Azure Hub-and-Spoke Firewall Architecture](diagrams/wk17-diagram.png)
+
+*Hub-and-spoke architecture with centralized Azure Firewall, private spoke workloads, Bastion access, forced egress routing, and Log Analytics monitoring.*
+
+---
+
+## 📑 Table of Contents
+
+- [🔥 Azure Hub-and-Spoke Firewall Architecture with Terraform](#-azure-hub-and-spoke-firewall-architecture-with-terraform)
+  - [📑 Table of Contents](#-table-of-contents)
+  - [📌 Project Overview](#-project-overview)
+  - [🎯 Business and Security Problem](#-business-and-security-problem)
+  - [🏗️ Architecture](#️-architecture)
+  - [🧰 Technologies Used](#-technologies-used)
+  - [🛡️ Security Controls](#️-security-controls)
+  - [🚀 Deployment](#-deployment)
+    - [Terraform workflow](#terraform-workflow)
+  - [✅ Validation](#-validation)
+    - [Firewall policy testing](#firewall-policy-testing)
+    - [Log analysis](#log-analysis)
+  - [📸 Evidence](#-evidence)
+    - [Build](#build)
+    - [Networking and routing](#networking-and-routing)
+    - [Rule enforcement and logging](#rule-enforcement-and-logging)
+  - [🧩 Challenges and Troubleshooting](#-challenges-and-troubleshooting)
+    - [Traffic routing](#traffic-routing)
+    - [Firewall rule validation](#firewall-rule-validation)
+    - [CI portability](#ci-portability)
+  - [🔐 Security Considerations](#-security-considerations)
+    - [Production improvements](#production-improvements)
+  - [💰 Cost Considerations](#-cost-considerations)
+  - [🧹 Cleanup](#-cleanup)
+  - [🏆 Key Outcomes](#-key-outcomes)
+  - [🧠 Skills Demonstrated](#-skills-demonstrated)
+  - [📂 Repository Structure](#-repository-structure)
+
+---
+
+## 📌 Project Overview
 
 This project implements a secure Azure hub-and-spoke network architecture using Terraform.
 
@@ -21,11 +61,11 @@ The project demonstrates how networking, routing, security enforcement, private 
 
 ---
 
-## Business and Security Problem
+## 🎯 Business and Security Problem
 
 As cloud environments grow, independently managing routing, internet access, and security controls in every workload network can create inconsistent policies and unnecessary operational overhead.
 
-A centralized hub-and-spoke design helps address this by placing shared network and security services in a central hub while keeping workloads separated across spoke networks.
+A centralized hub-and-spoke design addresses this by placing shared network and security services in a central hub while keeping workloads separated across spoke networks.
 
 This architecture was designed to demonstrate:
 
@@ -38,19 +78,18 @@ This architecture was designed to demonstrate:
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 The environment uses one hub virtual network and two spoke virtual networks.
 
-The hub hosts Azure Firewall and Azure Bastion, while workload virtual machines reside in the spoke networks. VNet peering provides connectivity between the hub and spokes.
+- **Hub:** hosts Azure Firewall and Azure Bastion
+- **Spokes:** host the workload virtual machines
+- **Connectivity:** VNet peering links the hub to each spoke
+- **Routing:** user-defined routes on the spoke subnets send default outbound traffic to the Azure Firewall private IP, creating a centralized inspection point
 
-User-defined routes on the spoke subnets send default outbound traffic to the Azure Firewall private IP, creating a centralized inspection point for internet-bound traffic.
+---
 
-![Azure Hub-and-Spoke Firewall Architecture](diagrams/wk17-diagram.png)
-
-*Azure hub-and-spoke architecture with centralized Azure Firewall, private spoke workloads, Bastion access, forced egress routing, and Log Analytics monitoring.*
-
-Technologies Used
+## 🧰 Technologies Used
 
 | Technology             | Purpose                                       |
 | ---------------------- | --------------------------------------------- |
@@ -68,63 +107,48 @@ Technologies Used
 | Network Watcher        | Connectivity validation                       |
 | GitHub Actions         | Automated Terraform formatting and validation |
 
-Security Controls
-Centralized Egress Filtering
+---
 
-Default routes from the spoke subnets direct internet-bound traffic through Azure Firewall rather than allowing workloads to communicate directly with the internet.
+## 🛡️ Security Controls
 
-Private Workload Access
+| Control                          | How it is implemented                                                                                                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Centralized egress filtering** | Default routes from the spoke subnets send internet-bound traffic through Azure Firewall instead of letting workloads reach the internet directly.                        |
+| **Private workload access**      | The Linux VMs use private IPs only. Azure Bastion provides browser-based SSH to the private workload VM.                                                                  |
+| **SSH key authentication**       | VM authentication uses SSH public keys, not passwords. The key is supplied through a Terraform variable so the configuration does not depend on a local workstation path. |
+| **Network segmentation**         | Separate spoke VNets separate workload environments while the hub centralizes shared infrastructure.                                                                      |
+| **Application-level filtering**  | Firewall application rules allow approved FQDN destinations and deny everything that does not match.                                                                      |
+| **Centralized logging**          | Firewall diagnostic logs are sent to Log Analytics for query, investigation, and validation.                                                                              |
+| **Infrastructure validation**    | GitHub Actions checks formatting and validity on every push to `main` and every pull request.                                                                             |
 
-The Linux virtual machines use private IP addresses and do not require directly exposed public IP addresses for administrative access.
+The CI workflow runs:
 
-Azure Bastion provides browser-based SSH connectivity to the private workload VM.
-
-SSH Key Authentication
-
-Linux VM authentication uses SSH public keys rather than password-based authentication.
-
-The SSH public key is supplied through a Terraform variable so the configuration does not depend on a specific local workstation path.
-
-Network Segmentation
-
-Separate spoke VNets provide logical separation between workload environments while the hub centralizes shared infrastructure.
-
-Application-Level Filtering
-
-Azure Firewall application rules allow approved FQDN destinations while unmatched traffic is denied.
-
-Centralized Logging
-
-Firewall diagnostic logs are sent to Log Analytics for query, investigation, and validation.
-
-Infrastructure Validation
-
-GitHub Actions automatically performs:
+```bash
 terraform fmt -check -recursive
 terraform init -backend=false
 terraform validate
-on pushes to main and pull requests.
+```
 
-Deployment
+---
 
-The environment was deployed into:
-rg-wk17-hub-spoke-devin
-in the East US Azure region.
+## 🚀 Deployment
 
-Terraform provisions the major infrastructure components, including:
+The environment was deployed to the **East US** region in the resource group `rg-wk17-hub-spoke-devin`.
 
-Hub virtual network
-Two spoke virtual networks
-VNet peering
-Azure Firewall
-Azure Firewall Policy
-Route tables
-Linux workload VMs
-Azure Bastion
-Log Analytics integration
-Diagnostic settings
+Terraform provisions:
 
-Terraform Workflow
+- Hub virtual network
+- Two spoke virtual networks
+- VNet peering
+- Azure Firewall and Azure Firewall Policy
+- Route tables
+- Linux workload VMs
+- Azure Bastion
+- Log Analytics integration and diagnostic settings
+
+### Terraform workflow
+
+```bash
 cd terraform
 
 terraform init
@@ -132,47 +156,243 @@ terraform fmt
 terraform validate
 terraform plan
 terraform apply
-Local environment-specific values should be supplied through a local terraform.tfvars file based on:
-terraform.tfvars.example
-Terraform state and local variable files are intentionally excluded from source control.
+```
 
-Validation
+Environment-specific values belong in a local `terraform.tfvars` file based on `terraform.tfvars.example`. Terraform state and local variable files are intentionally excluded from source control.
+
+---
+
+## ✅ Validation
 
 Deployment validation focused on proving that traffic followed the intended path and that firewall policy decisions were enforced.
 
-Resource Group Validation
+| Check                   | Result                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| **Resource group**      | Contains all components of the hub-and-spoke environment.                              |
+| **Azure Firewall**      | Deployed inside the hub VNet as the centralized egress control.                        |
+| **Firewall policy**     | Associated with the `fwp-hub-devin` policy that manages application and network rules. |
+| **VNet peering**        | Hub peered with both spoke VNets.                                                      |
+| **Forced egress route** | UDR sends `0.0.0.0/0` from the spoke subnet to the firewall private IP `10.0.1.4`.     |
+| **Private addressing**  | `vm-spoke1-01` → `10.1.1.4`, `vm-spoke2-01` → `10.2.1.4`                               |
+| **Diagnostic logging**  | Firewall diagnostic settings forward activity to Log Analytics.                        |
 
-The Azure resource group contained the infrastructure components required for the hub-and-spoke environment.
+### Firewall policy testing
 
-Azure Firewall
+Testing was performed from `vm-spoke1-01` through Azure Bastion. Requests were sent to three destinations:
 
-Azure Firewall was deployed inside the hub VNet as the centralized egress security control.
+| Destination         | Result    |
+| ------------------- | --------- |
+| `www.microsoft.com` | ✅ Allowed |
+| `www.bing.com`      | ✅ Allowed |
+| `example.com`       | ❌ Denied  |
 
-Firewall Policy
+This validated selective application-rule enforcement rather than unrestricted outbound access.
 
-The firewall was associated with the fwp-hub-devin policy used to manage application and network filtering rules.
+The `app-allow-web` application rule collection used:
 
-VNet Peering
+- **Priority:** 100
+- **Action:** Allow
+- **Source:** `10.1.1.4`
+- **Destinations:** approved FQDNs
 
-The hub VNet was peered with both spoke VNets to enable connectivity to centralized hub services.
+Network Watcher Connection Monitor was configured as an additional connectivity-validation mechanism.
 
-Forced Egress Routing
+### Log analysis
 
-A user-defined route sends:
+Firewall logs were queried through Log Analytics. This KQL query isolates application-rule activity from the spoke workload:
 
-0.0.0.0/0
+```kusto
+AzureDiagnostics
+| where Category == "AzureFirewallApplicationRule"
+| where TimeGenerated > ago(30m)
+| where msg_s has "10.1.1.4"
+| project TimeGenerated, msg_s
+| order by TimeGenerated desc
+```
 
-from the spoke subnet to the Azure Firewall private IP:
+The results showed:
 
-10.0.1.4
+- Allow decisions for `www.microsoft.com`
+- Allow decisions for `www.bing.com`
+- Deny decisions for `example.com`
 
-This forces internet-bound traffic through the firewall.
+This confirmed that firewall policy decisions were both enforced and recorded.
 
-Private Workload Addressing
+---
 
-The workload VMs use private addressing:
+## 📸 Evidence
 
-vm-spoke1-01 → 10.1.1.4
+### Build
+
+|                                                                 |                                                                       |
+| :-------------------------------------------------------------: | :-------------------------------------------------------------------: |
+| ![Resource group](screenshots/wk17-build-01-resource-group.png) | ![Firewall overview](screenshots/wk17-build-03-firewall-overview.png) |
+|                    *Resource group contents*                    |                       *Azure Firewall overview*                       |
+| ![VM private IPs](screenshots/wk17-build-04-vm-private-ips.png) | ![Firewall policy](screenshots/wk17-hub-spoke-01-firewall-policy.png) |
+|                  *Workload VMs on private IPs*                  |                           *Firewall policy*                           |
+
+### Networking and routing
+
+|                                                                 |                                                                       |
+| :-------------------------------------------------------------: | :-------------------------------------------------------------------: |
+| ![VNet peering](screenshots/wk17-hub-spoke-02-vnet-peering.png) | ![UDR route table](screenshots/wk17-hub-spoke-03-udr-route-table.png) |
+|                  *Hub and spoke VNet peering*                   |             *Route table forcing egress to the firewall*              |
+
+### Rule enforcement and logging
+
+|                                                                                       |                                                                               |
+| :-----------------------------------------------------------------------------------: | :---------------------------------------------------------------------------: |
+|         ![Bastion curl tests](screenshots/wk17-hub-spoke-05-bastion-curl.png)         |  ![Firewall application rule](screenshots/wk17-hub-spoke-06-fw-app-rule.png)  |
+|                  *Outbound tests from the spoke VM through Bastion*                   |                         *Application rule collection*                         |
+| ![Network Watcher capture](screenshots/wk17-hub-spoke-06-network-watcher-capture.png) | ![Log Analytics traffic logs](screenshots/wk17-hub-spoke-04-flow-logs-la.png) |
+|                       *Network Watcher connectivity validation*                       |                        *Traffic logs in Log Analytics*                        |
+
+![Firewall logs showing allow and deny](screenshots/wk17-hub-spoke-07-fw-logs-allow-deny.png)
+
+*KQL results showing allowed and denied firewall decisions.*
+
+---
+
+## 🧩 Challenges and Troubleshooting
+
+### Traffic routing
+
+Deploying Azure Firewall alone does not force spoke traffic through it. User-defined routes had to be associated with the spoke subnets so the default route pointed to the firewall private IP.
+
+### Firewall rule validation
+
+A successful connection by itself did not prove the policy was working. Both allowed and denied destinations were tested, then confirmed again in the firewall logs.
+
+### CI portability
+
+The original configuration referenced a workstation-specific SSH key path:
+
+```hcl
+~/.ssh/id_rsa.pub
+```
+
+GitHub Actions correctly flagged that this file would not exist on another runner. The configuration was refactored to accept the key through `var.ssh_public_key`, which made it portable across environments.
+
+---
+
+## 🔐 Security Considerations
+
+This project follows several security-focused design practices:
+
+- Workload VMs do not need directly exposed public IPs for administration
+- Administrative access goes through Azure Bastion
+- Password authentication is disabled on the Linux VMs, and SSH public keys are used instead
+- Internet-bound traffic is centrally routed through Azure Firewall
+- Application rules restrict permitted outbound destinations
+- Firewall logs are centrally collected for analysis
+- Terraform state and local `.tfvars` files are excluded from Git
+- GitHub Actions runs with read-only repository permissions
+- CI validates the configuration without Azure credentials and without deploying anything
+
+### Production improvements
+
+For a production environment, I would add:
+
+- Remote Terraform state with locking
+- Azure Key Vault integration
+- Private DNS architecture
+- Azure Firewall Premium capabilities
+- Additional NSG controls
+- Centralized identity integration
+- Multi-environment Terraform modules
+- Policy-as-code enforcement
+
+---
+
+## 💰 Cost Considerations
+
+Azure Firewall and Azure Bastion are billable resources and can create meaningful costs even in a lab environment.
+
+For temporary testing environments:
+
+- Deploy only when actively testing
+- Monitor Azure Cost Management
+- Destroy unused resources promptly
+- Avoid leaving Azure Firewall or Bastion running unnecessarily
+
+---
+
+## 🧹 Cleanup
+
+When the environment is no longer needed:
+
+```bash
+cd terraform
+terraform destroy
+```
+
+Review the destruction plan before confirming.
+
+> Terraform state is intentionally not committed to GitHub, so destruction must be run from the environment that holds the corresponding local or remote state.
+
+---
+
+## 🏆 Key Outcomes
+
+This project demonstrated the ability to:
+
+- Design a segmented Azure hub-and-spoke architecture
+- Deploy Azure infrastructure using Terraform
+- Centralize outbound filtering through Azure Firewall
+- Configure forced routing using UDRs
+- Secure administrative access with Azure Bastion
+- Implement SSH key authentication
+- Apply application-level firewall rules
+- Forward firewall diagnostics to Log Analytics
+- Analyze allowed and denied traffic with KQL
+- Validate network behavior through multiple tools
+- Build portable Terraform configurations
+- Implement automated Terraform CI validation with GitHub Actions
+
+---
+
+## 🧠 Skills Demonstrated
+
+**Azure:** Azure Networking · Azure Firewall · Hub-and-Spoke Architecture · VNet Peering · User-Defined Routes · Azure Bastion · Log Analytics · Azure Monitor · Network Watcher · KQL
+
+**Infrastructure as Code and CI/CD:** Terraform · Infrastructure as Code · Git · GitHub Actions · CI/CD
+
+**Security and Operations:** Cloud Security · Network Segmentation · Firewall Policy Management · SSH Security · Linux Administration
+
+---
+
+## 📂 Repository Structure
+
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── terraform-validate.yml
+├── diagrams/
+│   └── wk17-diagram.png
+├── screenshots/
+│   ├── wk17-build-01-resource-group.png
+│   ├── wk17-build-03-firewall-overview.png
+│   ├── wk17-build-04-vm-private-ips.png
+│   ├── wk17-hub-spoke-01-firewall-policy.png
+│   ├── wk17-hub-spoke-02-vnet-peering.png
+│   ├── wk17-hub-spoke-03-udr-route-table.png
+│   ├── wk17-hub-spoke-04-flow-logs-la.png
+│   ├── wk17-hub-spoke-05-bastion-curl.png
+│   ├── wk17-hub-spoke-06-fw-app-rule.png
+│   ├── wk17-hub-spoke-06-network-watcher-capture.png
+│   └── wk17-hub-spoke-07-fw-logs-allow-deny.png
+├── terraform/
+│   ├── .terraform.lock.hcl
+│   ├── main.tf
+│   ├── outputs.tf
+│   ├── provider.tf
+│   ├── terraform.tfvars.example
+│   ├── variables.tf
+│   └── versions.tf
+├── .gitignore
+└── README.md
+```
 vm-spoke2-01 → 10.2.1.4
 
 Diagnostic Logging
